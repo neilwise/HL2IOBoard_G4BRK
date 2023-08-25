@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.13)
+include(pico_sdk_import.cmake)
+project(HL2IOBoard_g4brk_lib C CXX ASM)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+pico_sdk_init()
+
+add_library(hl2ioboard STATIC
+	configure_pins.c
+	led_flasher.c
+	i2c_slave_handler.c
+	ft817_band_volts.c
+    k3_band_data.c
+	icom_ah4.c
+	frequency_code.c
+    fcode2bcode.c)
+target_link_libraries(hl2ioboard
+	pico_stdlib
+	hardware_i2c
+	hardware_pwm
+	hardware_adc
+	pico_i2c_slave)
