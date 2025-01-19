@@ -68,28 +68,49 @@ int main()
 				band = rx_band;
 			else
 				band = tx_band;
-// 			switch (band) {		// Set some GPIO pins according to the band
-// 			case BAND_40:
-// 			case BAND_15:
-// 				gpio_put(GPIO16_Out1, 1);
-// 				gpio_put(GPIO19_Out2, 0);
-// 				gpio_put(GPIO20_Out3, 0);
-// 				break;
-// 			case BAND_20:
-// 				gpio_put(GPIO16_Out1, 0);
-// 				gpio_put(GPIO19_Out2, 1);
-// 				gpio_put(GPIO20_Out3, 0);
-// 				break;
-// 			case BAND_10:
-// 				gpio_put(GPIO16_Out1, 0);
-// 				gpio_put(GPIO19_Out2, 0);
-// 				gpio_put(GPIO20_Out3, 1);
-// 				break;
-// 			default:	// This includes band zero (reset)
-// 				gpio_put(GPIO16_Out1, 0);
-// 				gpio_put(GPIO19_Out2, 0);
-// 				gpio_put(GPIO20_Out3, 0);
-// 			}
+ 			switch (band) {		// Set some GPIO pins according to the band
+		 	case BAND_160:
+ 				gpio_put(GPIO16_Out1, 1);
+ 				gpio_put(GPIO19_Out2, 0);
+ 				gpio_put(GPIO20_Out3, 0);
+				gpio_put(GPIO11_Out4, 0);
+ 				break;
+			case BAND_80: 
+ 				gpio_put(GPIO16_Out1, 0);
+ 				gpio_put(GPIO19_Out2, 1);
+ 				gpio_put(GPIO20_Out3, 0);
+				gpio_put(GPIO11_Out4, 0);
+ 				break;
+ 			case BAND_40:
+ 	 			gpio_put(GPIO16_Out1, 1);
+ 				gpio_put(GPIO19_Out2, 1);
+ 				gpio_put(GPIO20_Out3, 0);
+				gpio_put(GPIO11_Out4, 0);
+ 				break;		
+ 			case BAND_20:
+ 				gpio_put(GPIO16_Out1, 0);
+ 				gpio_put(GPIO19_Out2, 0);
+ 				gpio_put(GPIO20_Out3, 1);
+				gpio_put(GPIO11_Out4, 0);
+ 				break;
+			case BAND_15: 
+ 				gpio_put(GPIO16_Out1, 1);
+ 				gpio_put(GPIO19_Out2, 0);
+ 				gpio_put(GPIO20_Out3, 1);
+				gpio_put(GPIO11_Out4, 0);
+ 				break;
+ 			case BAND_10:
+ 				gpio_put(GPIO16_Out1, 1);
+ 				gpio_put(GPIO19_Out2, 1);
+ 				gpio_put(GPIO20_Out3, 1);
+				gpio_put(GPIO11_Out4, 0);
+ 				break;
+ 			default:	// This includes band zero (reset)
+ 				gpio_put(GPIO16_Out1, 0);
+ 				gpio_put(GPIO19_Out2, 0);
+ 				gpio_put(GPIO20_Out3, 0);
+				gpio_put(GPIO11_Out4, 0);
+ 			}
 		}
 	}
 }
