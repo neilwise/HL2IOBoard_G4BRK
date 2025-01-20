@@ -7,8 +7,8 @@
   (paper "USLetter")
   (title_block
     (title "Hermes Lite2 IO Connector")
-    (date "2023-03-26")
-    (rev "E")
+    (date "2023-09-12")
+    (rev "F")
     (company "N2ADR")
   )
 
@@ -314,7 +314,7 @@
       (effects (font (size 1 1) (thickness 0.15)))
       (tstamp 6c2d26bc-6eca-436c-8025-79f817bf57d6)
     )
-    (fp_text value "1500p" (at 0 1.68) (layer "F.Fab")
+    (fp_text value "680p" (at 0 1.68) (layer "F.Fab")
       (effects (font (size 1 1) (thickness 0.15)))
       (tstamp cb24efdd-07c6-4317-9277-131625b065ac)
     )

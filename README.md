@@ -1,19 +1,29 @@
 # IO Board for the Hermes Lite 2 by N2ADR
-**August 20, 2023**
+**January 6, 2024**
 
 **Please click the left button "-  ----" above for a navigation menu.**
 
 **Register names are now fixed, but there may be additions. Further documentation is coming, stay tuned.
 Please provide feedback, especially if you see a problem.**
 
-This project is a 5 by 10 cm printed circuit board and related firmware. The board mounts above the N2ADR filter board in the same box as the Hermes Lite 2. The PC running the SDR software sends the transmit frequency to the board. The microcontroller on the board then uses the board's switches to control an amplifier, switch antenns or transverters, etc. There are a variety of IO resources available and there will be different microcontroller software for each application. The IO board is meant to be a general purpose solution to control hardware attached to the HL2.
+This project is a 5 by 10 cm printed circuit board and related firmware. The board mounts in the same box as the Hermes Lite 2.
+It mounts above the N2ADR filter board if one is installed.
+The filter board and the IO board are independent of each other.
+The PC running the SDR software sends the transmit frequency to the board.
+The microcontroller on the board then uses the board's switches to control an amplifier, switch antenns or transverters, etc.
+There are a variety of IO resources available and there will be different microcontroller software for each application.
+The IO board is meant to be a general purpose solution to control hardware attached to the HL2.
+
+The IO board could also be connected to the I2C bus on a single board computer to provide station control.
 
 The board has a Pico microcontroller and IO resources including
 5 volt gates, low side switches, a fan controller, and a UART. There are two SMA connectors for a separate Rx input and a Pure Signal input.
-The board plugs into the [Hermes Lite 2](http://www.hermeslite.com) main board and replaces the 2x20 jumper that connects to the N2ADR filter board.
-The board sits directly above the filter board as shown in the photos below.
+The board plugs into the [Hermes Lite 2](http://www.hermeslite.com) main board and replaces the 2x20
+jumper that connects to the N2ADR filter board.
+The board sits directly above the filter board (if any) as shown in the photos below.
 
-To use the board it will be necessary to choose which switches you need and solder wire jumpers from the switches to the DB9 connector. Then you must write or download firmware for the Pico that will operate the switches based on the transmit frequency.
+To use the board it will be necessary to choose which switches you need and solder wire jumpers from the switches to the DB9 connector.
+Then you must write or download firmware for the Pico that will operate the switches based on the transmit frequency.
 
 
 #### IO board mounted above the filter board
@@ -35,6 +45,12 @@ header at the back edge of the board. Following that, two holes are skipped, and
 VSUP is the 12 volt HL2 input supply taken after the fuse.
 It is convenient to place the 2x20 pin header across the existing pins and the three added pins to provide
 alignment when soldering. The IO board has a 2x25 pin header. When installed, this connects the HL2 to the filter board as usual.
+
+For the three-pin header you need the same size as the 1x20 header on the main HL2 board. The pin pitch is 2.54 mm.
+On my HL2, the total height is 11.43 mm with 3.05 mm below the PCB. The pins are square and 0.64 mm on a side.
+But my HL2 is an old one, so check what size your pins are. The exact height is not too critical.
+
+#### Added three-pin header
 ![](./pictures/HL2Mod.jpg)
 
 ## Initial Testing of the IO Board
@@ -55,6 +71,8 @@ Connector J6 has MOSFETs that short the pin to ground.
 To test, connect a DC voltage of 3.3 to 16 volts to one end of a resister of a few thousand ohms.
 Connect the other end to an oscilloscpe, and use this end to probe J6 pins 1 to 7.
 You should see the same signal as on J4 but with reverse polarity.
+
+The test program can generate a test pattern for the antenna tuner protocol. Write a "1" to REG_ANTENNA_TUNER. SDR authors can use this to help write code for this feature. 
 
 ## Design of the IO Board Hardware
 The IO board is a four-layer PCB. Rather large parts are used, with none smaller than 0805 (2012 metric). It is designed to be easy to solder at home. It is only necessary to mount the parts you plan to use.
@@ -91,7 +109,8 @@ But the standard RS232 levels are more like plus and minus eight volts, so a con
 A "low-side switch" is a mosfet to ground. They are commonly used to switch relays. But they can also implement a wired-or bus
 such as a one-wire bus or an I2C bus. The Icom AH-4 antenna tuner can be controlled this way. The switches are implemented
 in a TBD62381AFWG,EL integrated circuit. This has an absolute maximum rating of 50 volts and 500 ma per channel.
-Always place a diode across relay coils when using switches.
+
+**These low-side switches are NOT protected against inductive loads. Always place a diode across relay coils and any other inductive load.**
 
 There is a 15x18 mm bare copper area for prototyping. There is a 1x5 header J2 and a 1x2 header J12 to plug in a perf board for additional area.
 
@@ -107,7 +126,7 @@ wire to the pads and to the DB9 pads. Of course, you can add headers if desired.
 |GPIO01_Sw12|Switched VSUP (usually 12 volts)|Sw12|
 |GPIO02_RF3|Control Pure Signal input||
 |GPIO03_INTTR|Control HL2 T/R relay||
-|GPIO04_Fan|Zero to VSUP fan voltage|J3|
+|GPIO04_Fan|Zero to 11.5 fan voltage|J3|
 |GPIO05_xxx|not connected||
 |GPIO06_In5|Protected logic input|J8 pin 5|
 |GPIO07_In4|Protected logic input|J8 pin 4|
@@ -139,6 +158,7 @@ Firmwares for the Pico are in subdirectories of HL2IOBoard. Look in the source f
 - n2adr_test   Test program to toggle the 5 volt outputs.
 - n2adr_basic  Very basic example.
 - n2adr_lib    Library of useful subroutines used in the above.
+- n1adj_hr50   Control the [Hardrock-50](https://hobbypcb.com/products/hardrock-50-hf-power-amp-kit) amplifier.
 
 To create your own firmware, install the Pico SDK and create a directory for your code.
 You may want to clone my github project to get you started.
@@ -161,8 +181,58 @@ There is an LED on the Pico. When the firmware is running, it flashes slowly. Wh
 The Pico listens to I2C address 0x1D and you can read and write to registers at this address. Writes always send one byte.
 Reads always return four bytes of data.
 A read from a register returns that register and the next three.
-All registers are 8 bit and are initialized to zero.
-In general, a read of a register returns the last value written, but there are exceptions noted in the table below.
+All registers are 8 bit and are initialized to zero at power on, and after a software reset.
+
+Since the register address is one byte, there are 256 registers. This is implemented as a 256 byte static array.
+You can write to any register, not just the ones in the table below. 
+In general, a read from a register returns the last value written, but there are exceptions noted in the table below.
+The polling loop in main.c can see all 256 registers and can implement an action for any register.
+Registers 200 and up can be claimed by SDR authors, and are used for features that are optional or unique to an SDR program.
+
+#### Frequency Codes
+
+The files n2adr_lib/frequency_code.c and frequency_code.py contain functions to convert a frequency in hertz to a one-byte code,
+and to convert a code back to a frequency. The code is a useful one-byte approximation of the frequency
+which is sufficient to recognize the band and to select antennas.
+The codes are monotonic in frequency. The special code zero means the frequency was not entered and is unspecified.
+A table of all the codes is at [frequencycodes.html](http://james.ahlstrom.name/frequencycodes.html).
+Run the Python file "python frequency_code.py" to print your own table of codes.
+
+#### Band Codes
+
+A band code is a single frequency code for each band.
+The band code is chosen to be as close to the band frequency as possible. All other frequency codes are assigned to the closest band code.
+A table of band codes is in hl2ioboard.h.
+You can use the band code to select antennas, or you can use the frequency code directly.
+
+The band code is convenient because some bands have multiple frequency codes. And since all frequency codes resolve to the
+closest band code, there are no gaps in coverage. If you tune outside the band, the closest band antenna is chosen.
+
+#### Global Variables
+
+These global variables are set in i2c_slave_handler() when data is received:
+
+  * extern uint64_t new_tx_freq;
+  * extern uint8_t new_tx_fcode;
+
+The Tx frequency and Tx frequency code are set when the Tx frequency changes.
+
+  * extern bool rx_freq_changed;
+  * extern uint8_t rx_freq_high;
+  * extern uint8_t rx_freq_low;
+
+These are set when any of the twelve Rx frequencies change. If all Rx frequencies are zero, rx_freq_high and low are both zero.
+
+  * extern uint8_t Registers[256];
+
+This is the array of all register data.
+
+  * extern uint8_t firmware_version_major;
+  * extern uint8_t firmware_version_minor;
+
+You must set the version in your main routine so it can be returned to software.
+
+#### Library Functions
 
 The directory n2adr_lib contains utility functions to make writing Pico software easier.
 
@@ -187,13 +257,14 @@ The file frequencycode.py is the same code in Python, and it is not used here. I
 This converts a frequency code to a band code. A band code is a single frequency code for each band. See below.
 
   * void ft817_band_volts(uint8_t band_code)
+  * void xiegu_band_volts(uint8_t band_code)
 
-This is used to generate a zero to five volt band voltage on J4 pin 8. It may need adjustment if you don't have an FT817.
+These are used to generate a zero to five volt band voltage on J4 pin 8.
 
   * i2c_slave_handler.c
 
 This contains the I2C interrupt handler that is called for I2C reads and writes. Since it must return quickly,
-it mostly sets global variables that you can test in a loop in your Pico program.
+it mostly sets registers and global variables that you can test in a loop in your Pico program.
 When it receives the Tx frequency, it sets new_tx_freq to the frequency and new_tx_fcode to the corresponding frequency code.
 It also uses firmware_version_major and firmware_version_minor, and you must set these in your Pico program.
 
@@ -202,9 +273,9 @@ It also uses firmware_version_major and firmware_version_minor, and you must set
 This contains code to control the Icom AH4 antenna tuner. It is untested.
 
 
-### Table of I2C Registers
+#### Table of I2C Registers
 
-When you write code, please use the register names shown. The names are also in i2c_registers.h.
+When you write code, please use the register names shown. The names are in i2c_registers.h.
 
 |Register|Name|Description|
 |--------|----|-----------|
@@ -213,26 +284,6 @@ When you write code, please use the register names shown. The names are also in 
 |2|REG_TX_FREQ_BYTE2|Next Tx frequency byte|
 |3|REG_TX_FREQ_BYTE1|Next Tx frequency byte|
 |4|REG_TX_FREQ_BYTE0|The least significant byte of the Tx frequency.|
-|5|REG_CONTROL|Write 1 to reset all the registers to zero.|
-|6|REG_INPUT_PINS|Read only. The input pin bits: In5, In4, In3, In2, In1, Exttr|
-|7|REG_ANTENNA_TUNER|See the antenna tuner protocol below|
-|8|REG_FAULT|Read only. Zero for no fault. The meaning of non-zero codes is not currently defined.|
-|9|REG_FIRMWARE_MAJOR|Read only. Firmware major version|
-|10|REG_FIRMWARE_MINOR|Read only. Firmware minor version|
-|11|REG_RF_INPUTS|The receive input usage, 0, 1 or 2. See below|
-|12|REG_FAN_SPEED|The fan voltage as a number from 0 to 255|
-|13|REG_FCODE_RX1|The frequency code for the first receiver RX1|
-|14-24|REG_FCODE_RX2 to RX12|The frequency code for receiver RX2 to RX12|
-|25|REG_ADC0_MSB|The most significant byte of ADC0|
-|26|REG_ADC0_LSB|The least significant byte of ADC0|
-|27|REG_ADC1_MSB|The most significant byte of ADC1|
-|28|REG_ADC1_LSB|The least significant byte of ADC1|
-|29|REG_ADC2_MSB|The most significant byte of ADC2|
-|30|REG_ADC2_LSB|The least significant byte of ADC2|
-
-
-
-#### Transmit Frequency
 
 The transmit frequency is a five-byte integer number in hertz. You can send BYTE1 to BYTE4 in any order.
 When BYTE0 is sent, the Pico will update the global 64-bit integer new_tx_freq and the 8-bit frequency code new_tx_fcode.
@@ -240,42 +291,11 @@ This happens in an interrupt service routine in n2adr_lib/i2c_slave_handler.c.
 Use a polling routine in your main.c to look for changes. See the example in n2adr_basic.
 If a transverter is in use, the Tx frequency includes the transverter offset.
 
-#### Frequency Codes
-
-The files n2adr_lib/frequency_code.c and frequency_code.py contain functions to convert a frequency in hertz to a one-byte code,
-and to convert a code back to a frequency. The code is a useful one-byte approximation of the frequency
-which is sufficient to recognize the band and to select antennas.
-The codes are monotonic in frequency. The special code zero means the frequency was not entered and is unspecified.
-A table of all the codes is at [frequencycodes.html](http://james.ahlstrom.name/frequencycodes.html).
-Run the Python file "python frequency_code.py" to print your own table of codes.
-
-#### Receive Frequency
-
-The HL2 can have from one to twelve independent receivers. SDR software can use this feature
-to scan multiple bands for digital or CW signals. Choosing an antenna requires knowing all the Rx frequencies.
-The Rx frequencies are sent as a one-byte frequency code to registers 13 to 24 with names REG_FCODE_RX1 to RX12.
-The HL2 always has RX1, but if it is unspecified (zero) it is the same as the Tx frequency.
-If any Rx frequency is changed, the global boolean rx_freq_changed is set to true.
-If a transverter is in use, the Rx frequency includes the transverter offset.
-
-#### Band Codes
-
-A band code is a single frequency code for each band.
-The band code is chosen to be as close to the band frequency as possible. All other frequency codes are assigned to the closest band code.
-A table of band codes is in hl2ioboard.h.
-You can use the band code to select antennas, or you can use the frequency code directly.
-
-The band code is convenient because some bands have multiple frequency codes. And since all frequency codes resolve to the
-closest band code, there are no gaps in coverage. If you tune outside the band, the closest band antenna is chosen.
-
-#### Receive Input Usage
-
-This determines how the SMA receive input J9 and the Pure Signal input J10 are used. Mode 0 means that the receive input is not used,
-but the Pure Signal input is available. Mode 1 means that the receive input is used instead of the usual HL2 input,
-and the Pure Signal input is not available. Mode 2 means that the receive input is used for receive, and the Pure
-Signal input is used for transmit.
-
-#### Antenna Tuner
+|Register|Name|Description|
+|--------|----|-----------|
+|5|REG_CONTROL|Write 1 to reset all the registers to zero.|
+|6|REG_INPUT_PINS|Read only. The input pin bits: In5, In4, In3, In2, In1, Exttr|
+|7|REG_ANTENNA_TUNER|Control an antenna tuner|
 
 A write to register REG_ANTENNA_TUNER is a command to the tuner. I am modeling this on the Icom AH-4 but I want it to work in general.
 See the code in n2adr_lib/icom_ah4.c.
@@ -286,11 +306,107 @@ A final value of zero indicates a successful tune. Values of 0xF0 and higher ind
 Note that the IO board can not initiate RF and so the need for 0xEE.
 SDR software is not required to implement this command. In the future there may be an external program to do this.
 
-#### Analog to Digital Converter
+|Register|Name|Description|
+|--------|----|-----------|
+|8|REG_FAULT|Read only. Zero for no fault. The meaning of non-zero codes is not currently defined.|
+|9|REG_FIRMWARE_MAJOR|Read only. Firmware major version|
+|10|REG_FIRMWARE_MINOR|Read only. Firmware minor version|
+|11|REG_RF_INPUTS|The receive input usage, 0, 1 or 2.|
+
+REG_RF_INPUTS determines how the SMA receive input J9 and the Pure Signal input J10 are used.
+Mode 0 means that J9 is not used, and the usual HL2 input is the receive input.
+In mode 0 the Pure Signal input J10 is mixed with the receive signal.
+For modes 1 and 2, J9 is used instead of the usual HL2 receive input.
+Mode 1 means that J9 is used for the receive signal and the Pure Signal input is not available.
+Mode 2 means that for receive, J9 is used for the receive signal;
+and that for transmit, the Pure Signal input is passed to the HL2 instead of a receive signal.
+
+
+|Register|Name|Description|
+|--------|----|-----------|
+|12|REG_FAN_SPEED|The fan voltage as a number from 0 to 255|
+|13|REG_FCODE_RX1|The frequency code for the first receiver RX1|
+|14-24|REG_FCODE_RX2 to RX12|The frequency code for receiver RX2 to RX12|
+
+The HL2 can have from one to twelve independent receivers. SDR software can use this feature
+to scan multiple bands for digital or CW signals. Choosing an antenna requires knowing all the Rx frequencies.
+The Rx frequencies are sent as a one-byte frequency code to registers 13 to 24 with names REG_FCODE_RX1 to RX12.
+The HL2 always has RX1, but if it is unspecified (zero) it is the same as the Tx frequency.
+If any Rx frequency is changed, the global boolean rx_freq_changed is set to true.
+If a transverter is in use, the Rx frequency includes the transverter offset.
+
+|Register|Name|Description|
+|--------|----|-----------|
+|25|REG_ADC0_MSB|The most significant byte of ADC0|
+|26|REG_ADC0_LSB|The least significant byte of ADC0|
+|27|REG_ADC1_MSB|The most significant byte of ADC1|
+|28|REG_ADC1_LSB|The least significant byte of ADC1|
+|29|REG_ADC2_MSB|The most significant byte of ADC2|
+|30|REG_ADC2_LSB|The least significant byte of ADC2|
 
 The Pico has one 12-bit ADC that can read from ADC0, ADC1 and ADC2 on pins GPIO26, GPIO27 and GPIO28.
 Always read the most significant byte first because that triggers the conversion.
-Since reads always return four bytes, you can return two ADC values at once.
+A read from ADC0 returns the value of ADC0 and ADC1 in the four byte response.
+A read from ADC1 returns the value of ADC1 and ADC2.
+Reading the two values in quick succession can be used to calculate SWR from forward and reverse power.
+
+|Register|Name|Description|
+|--------|----|-----------|
+|31|REG_ANTENNA|Choose among multiple antennas|
+
+Normally, the antenna choice is calculated by the Pico based on the Tx and Rx frequencies.
+But there may be multiple antennas available for a single band.
+The high four bits of REG_ANTENNA is the Tx antenna, and the low four bits is the Rx antenna for the current band.
+A zero means the first (default) antenna.
+
+|Register|Name|Description|
+|--------|----|-----------|
+|32|REG_OP_MODE|Set the operating Mode|
+
+
+||Mode|Value|Mode|Value|Mode|Value|Mode|Value|
+|---|---|---|---|---|---|---|---|---|
+||LSB|0|USB|1|DSB|2|CWL|3|
+||CWU|4|FM|5|AM|6|DIGU|7|
+||SPEC|8|DIGL|9|SAM|10|DRM|11|
+||AM_LSB|12|AM_USB|13|
+
+Operating mode values are based on Thetis internal definitions.
+Note that value zero does not mean "unspecified".
+
+|Register|Name|Description|
+|--------|----|-----------|
+|167|REG_STATUS|Read or write to Sw5 and Sw12. Read the In1 configuration.|
+|168|REG_IN_PINS|Same as REG_INPUT_PINS plus Out1 and Out8 configuration.|
+|169|REG_OUT_PINS|Read or write to GPIO Out8 to Out1 directly.|
+|170|GPIO_DIRECT_BASE|Map this register to GPIO 0|
+|171-198||GPIO 1 to 28|
+
+A read or write to registers GPIO_DIRECT_BASE to GPIO_DIRECT_BASE + 28 reads or writes to the Pico GPIO pins 0 to 28.
+This supports using Steve's hermeslite.py or similar to control the Pico registers directly.
+A user could write a program to switch antennas without adding C code to the Pico.
+Since the SDR program writes Tx and Rx frequencies to the Pico, a third party program could read them back to select the antenna.
+For C programmers, it would still be easier to write the code into the Pico.
+
+The other registers add further support. Bits are numbered from 7 to zero and the most significant bit is 7.
+
+  * REG_STATUS
+
+Bit 0 is Sw5, bit 1 is Sw12, bit 2 is 1 if In1 is configured as a UART.
+
+  * REG_IN_PINS
+
+This is read-only. It is the same as REG_INPUT_PINS, and adds two bits. Bit 6 is 1 if Out1 is configured as UART.
+Bit 7 is 1 if Out8 is configured as band volts.
+
+  * REG_OUT_PINS
+
+This reads and writes Out1 to Out8 directly. Bit 0 is Out1 and bit 7 is Out8.
+
+|Register|Name|Description|
+|--------|----|-----------|
+|200-255||Reserved for SDR authors. If you use them, please document them.|
+
 
 ## Modifications to SDR PC Software
 
@@ -305,7 +421,7 @@ authors (Quisk, Spark, Power SDR, etc.) to write extensive logic to control IO. 
 users should write new Pico firmware to provide the services they require. It is easy to write firmware for the Pico.
 Ideally, an owner of a given power amp, for example HR50, would write a custom firmware and provide a wiring diagram for that amp.
 
-*Do NOT ask authors to modify SDR software! Write new firmware instead!*
+**Do NOT ask authors to modify SDR software! Write new firmware instead!**
 
 ### Reset
 
@@ -331,11 +447,43 @@ setting low pass filters to that band. If all Rx frequencies are zero, the Rx ba
 
 ### RF Receive Input
 
-The mode control 0, 1 or 2 is a user setting. There needs to be an option to set this. Quisk has this option.
+The mode control REG_RF_INPUTS is 0, 1 or 2, and is a user setting. There needs to be an option to set this.
 
 ### Fan Control
 
 The fan speed control can be an internal calculation based on temperature, as is currently the case for the fan control
 in the HL2 gateware. I don't see the need for a user option for this. Quisk does not implement the fan.
 
-**Further documentation is coming, stay tuned. Please provide feedback, especially if you see a problem.**
+## IO Board Control Software
+
+The software directory contains the Python program n2adr_ioboard.pyw which can be used to control the IO board.
+It uses Steve's hermeslite.py software, and a copy is included. To use it, copy the two files to a convenient directory.
+You will need to install the netifaces package as follows:
+
+python -m pip install netifaces
+
+Then run the program:
+
+python n2adr_ioboard.pyw
+
+#### Control Program
+![](./pictures/BoardControl.png)
+
+#### Reduced to a Tool Bar
+![](./pictures/BoardTool.png)
+
+The program will report the IO board status. You can change the status from the program, and this
+may reduce the need to modify SDR programs. It provides a way to control the IO board from Python
+rather that write code for the Pico.
+
+Normally the program will search for the HL2. If you need to select one of several HL2's or if searching doesn't work,
+enter the IP address and press Enter.
+
+Some fields just report status. Click on the fan voltage or band voltage to change the values.
+Click on the GPIO boxes to change the values.
+The Macro buttons copy their values to the GPIO row all at once.
+
+The N2ADR control program is not "finished" (does any program ever get finished?) and I invite
+a discussion about what it should do.
+
+**End of Documentation**
